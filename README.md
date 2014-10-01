@@ -109,7 +109,7 @@ On Android, in addition to the above steps, add the following line to your start
 
     R1ConnectPluginCommon.ConnectStart();
 
-And override onApplicationPause of your script by adding the following line
+And override OnApplicationPause of your script by adding the following line
 
     R1ConnectPluginCommon.ConnectStop();	
 
