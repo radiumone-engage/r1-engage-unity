@@ -111,7 +111,9 @@ On Android, in addition to the above steps, add the following line to your start
 
 And override OnApplicationPause of your script by adding the following line
 
-    R1ConnectPluginCommon.ConnectStop();	
+    R1ConnectPluginCommon.ConnectStop();
+    
+Also attach the R1ConnectPluginCommon.cs to the main camera or any other game object that wants to listen to the callbacks from advertising flows.     
 
 
 ##b. Advertising Actions
@@ -164,6 +166,29 @@ While the Offerwall, Interstitial and Video ad types all provide a method for th
 	R1ConnectPluginCommon.HideBanner()
 
 Once called, the banner will be removed from the screen and all memory related to the banner released.
+
+
+The 'HandleDidClosed' callback method implemented in this sdk is invoked when a user exits an advertising flow.  Register this handler in the onEnable method and unregister it in the onDisable method of your script.
+
+```
+	void OnEnable()
+	{
+		R1ConnectPluginCommon.didClosed += HandleDidClosed;
+	
+	}
+	void OnDisable()
+	{
+		R1ConnectPluginCommon.didClosed -= HandleDidClosed; 
+		
+	}
+```	
+
+
+````
+	public void HandleDidClosed (){
+		// do something
+	}
+````
 
 
 ###1. Additional Configuration Options
