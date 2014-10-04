@@ -168,27 +168,36 @@ While the Offerwall, Interstitial and Video ad types all provide a method for th
 Once called, the banner will be removed from the screen and all memory related to the banner released.
 
 
-The 'HandleDidClosed' callback method implemented in this sdk is invoked when a user exits an advertising flow.  Register this handler in the onEnable method and unregister it in the onDisable method of your script.
+The 'HandleDidClosed' callback method implemented in this sdk is invoked when a user exits an advertising flow.
+
+````	
+	public void HandleDidClosed (){
+		// do something
+	}
+````
+
+The 'HandleDidReceiveNewReward' callback method implemented in this sdk is invoked when a user completes an advertising flow.
+
+````
+	public void HandleDidReceiveNewReward(int rewards){
+		// do something
+	}
+````
+
+Register these two handlers in the onEnable method and unregister them in the onDisable method of your script.
 
 ```
 	void OnEnable()
 	{
 		R1ConnectPluginCommon.didClosed += HandleDidClosed;
-	
+		R1ConnectPluginCommon.didReceiveNewReward += HandleDidReceiveNewReward;
 	}
 	void OnDisable()
 	{
 		R1ConnectPluginCommon.didClosed -= HandleDidClosed; 
-		
+		R1ConnectPluginCommon.didReceiveNewReward += HandleDidReceiveNewReward;
 	}
 ```	
-
-
-````
-	public void HandleDidClosed (){
-		// do something
-	}
-````
 
 
 ###1. Additional Configuration Options
