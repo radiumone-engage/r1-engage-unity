@@ -5,6 +5,7 @@
 - [2. Adding the Plugin to your Unity Project](#user-content-2-adding-the-plugin-to-your-unity-project)
   - [a. Importing](#user-content-a-import)
   - [b. Connect Package Scripts](#user-content-b-connect-package-scripts)
+  - [c. Attach R1ConnectPluginCommon script to the game object](#user-content-c-attach-r1connectplugincommon-script-to-the-game)
 - [3. Using Connect Scripts](#user-content-3-using-connect-scripts)
   - [a. Basic Initialization](#user-content-a-basic-initialization)
   - [b. Advertising Actions](#user-content-b-advertising-actions)
@@ -86,6 +87,9 @@ Import all the files listed in the platform directory for each supported OS on w
 Verify that you are building your unity project for iOS or Android.  File > Build Settings... > Android/iOS > Switch Platform
 Without specifying a platform, the compiler will throw an error.
 
+##c. Attach R1ConnectPlugin script to the game object
+Attach the `R1ConnectPluginCommon.cs` to the game object where you want to receive the callbacks of earned rewards, ad closed and list of completed ads.
+
 #3. Using Connect Scripts
 
 All Connect functions are called off the R1ConnectPluginCommon class.
@@ -94,7 +98,8 @@ All Connect functions are called off the R1ConnectPluginCommon class.
 
 First, specify your applicationID.  You only to do this once in your application; it isn't desirable to have the object that has an attached script which calls Connect to repeatedly load and unload.  Therefore, it is suggested that you attach a custom script to your camera. Then, in an appropriate place in the script (e.g. the Start() call of a customized MonoBehavior class) set up the applicationID:
 
-    R1ConnectPluginCommon.SetApplicationId("YOUR APPLICATION ID");  //Ask your RadiumOne contact for an app id
+    R1ConnectPluginCommon.SetApplicationId("YOUR APPLICATION ID");
+    //Ask your RadiumOne contact for an app id
 
 Once the Connect Plugin has its applicationID set, enable one or both of its activity modules: Analytics and DisplayAds.
 
@@ -170,32 +175,54 @@ Once called, the banner will be removed from the screen and all memory related t
 
 The 'HandleDidClosed' callback method implemented in this sdk is invoked when a user exits an advertising flow.
 
-````	
-	public void HandleDidClosed (){
+````
+
+	public void HandleDidClosed(){
 		// do something
 	}
 ````
 
-The 'HandleDidReceiveNewReward' callback method implemented in this sdk is invoked when a user completes an advertising flow.
+CheckCompletion will send an asynchronous query to our servers to return (if applicable) rewards earned (in your app's currency) and the list of trackIDs associated with completed offers - if no offers have been completed then no trackIDs will be returned.
+TrackIDs are values specified by your application to (uniquely) identify any given advertisement.  You set a trackID prior to displaying an advertisment (explained below in additional configuration options).
+Normally, it is not necessary to call CheckCompletion manually as its checks are typically done automatically as advertisements are viewed and dismissed.  But you may choose to call this upon app launch to ensure there are no completed items waiting to be gathered.
+
 
 ````
+	R1ConnectPluginCommon.CheckCompletion()
+````
+
+
+The 'HandleDidReceiveNewReward' and 'HandleDidReceiveCompletedOffers' callback methods implemented in this sdk may be invoked  after an advertisment is viewed or dimissed as well as upon return of a manual call to CheckCompletion().
+
+````
+
 	public void HandleDidReceiveNewReward(int rewards){
-		// do something
+		// do something with rewards - rewards value is in in-app currency
+		// as set up for your application in our Engage portal online.
+	}
+	
+	public void HandleDidReceiveCompletedOffers(string [] ids){
+		// do something with array of trackIDs returned.  For example, you might
+		// reward users as particular trackIDs are completed (and returned here).
+		// Or you might unlock content for them after a certain amount of trackIDs
+		// have been returned.  You can be as creative as you want.
 	}
 ````
 
-Register these two handlers in the onEnable method and unregister them in the onDisable method of your script.
+Register these three handlers in the onEnable method and unregister them in the onDisable method of your script.
 
 ```
 	void OnEnable()
 	{
 		R1ConnectPluginCommon.didClosed += HandleDidClosed;
 		R1ConnectPluginCommon.didReceiveNewReward += HandleDidReceiveNewReward;
+		R1ConnectPluginCommon.didReceiveCompletedOffers += HandleDidReceiveCompletedOffers;
 	}
 	void OnDisable()
 	{
 		R1ConnectPluginCommon.didClosed -= HandleDidClosed; 
-		R1ConnectPluginCommon.didReceiveNewReward += HandleDidReceiveNewReward;
+		R1ConnectPluginCommon.didReceiveNewReward -= HandleDidReceiveNewReward;
+		R1ConnectPluginCommon.didReceiveCompletedOffers -= HandleDidReceiveCompletedOffers;
 	}
 ```	
 
@@ -204,13 +231,26 @@ Register these two handlers in the onEnable method and unregister them in the on
 
 There are several optional values you can set that will add to the quality of your analytics or advertising.
 
-    R1ConnectPluginCommon.SetTrackId(string trackId) // A custom value for your own tracking needs (we will save and return back up to 100 characters of it).  Typically, you would want to set this (changing) value right before you presented a full-screen advertisement (offerwall or video).
-    R1ConnectPluginCommon.SetUserId(string userId) // An identifier you determine that for the current user (if you don't use this function we’ll use the appropriate platform Advertising Identifier in its place).
-    R1ConnectPluginCommon.SetGender(R1ConnectPluginCommon.UserGender gender) // The gender of your user.
+    R1ConnectPluginCommon.SetUserId(string userId)
+	// An identifier you determine that for the current user (if you don't use this function we’ll
+	// use the appropriate platform Advertising Identifier in its place).
+
+    R1ConnectPluginCommon.SetGender(R1ConnectPluginCommon.UserGender gender)
+	// The gender of your user. Use one of the following predefined valued:
     R1ConnectPluginCommon.UserGender.GENDER_UNSPECIFIED
     R1ConnectPluginCommon.UserGender.GENDER_MALE
     R1ConnectPluginCommon.UserGender.GENDER_FEMALE
-    R1ConnectPluginCommon.SetAge(int age) // The age of your user.
+	
+    R1ConnectPluginCommon.SetAge(int age)
+	// The age of your user.
+	
+    R1ConnectPluginCommon.SetTrackId(string trackId)
+	// A custom value for your own tracking needs (we will save and return back up to 100 characters of it).
+	// Typically, you would want to set this (changing) value right before you present an advertisement
+	// (offerwall, video, interstitial, banner).  Setting a trackID allows you to later check if a user
+	// completed an offer related to an viewed advertisment, allowing you to reward them with some in app
+	// bonus or feature that you designate.
+
 
 ##c. Analytics Actions
 
