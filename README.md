@@ -6,14 +6,15 @@
   - [a. Importing](#user-content-a-import)
   - [b. Connect Package Scripts](#user-content-b-connect-package-scripts)
   - [c. Attach R1ConnectPluginCommon script to the game object](#user-content-c-attach-r1connectplugincommon-script-to-the-game)
-- [3. Using Connect Scripts](#user-content-3-using-connect-scripts)
+- [3. Using Connect Scripts](#user-content-4-using-connect-scripts)
   - [a. Basic Initialization](#user-content-a-basic-initialization)
   - [b. Advertising Actions](#user-content-b-advertising-actions)
+  - [ i. Ad Mediation](#user-content-i-ad-mediation)
   - [c. Analytics Actions](#user-content-c-analytics-actions)
     - [ i. Automatic Events](#user-content-i-automatic-events)
     - [ ii. Custom Events](#user-content-ii-custom-events)
     - [ iii. Common Events](#user-content-iii-common-events)
-- [4. Building Your Project](#user-content-4-building-your-project)
+- [4. Building Your Project](#user-content-5-building-your-project)
   - [a. For iOS Targets](#user-content-a-for-ios-targets)
   - [b. For Android Targets](#user-content-b-for-android-targets)
 
@@ -24,7 +25,7 @@ The RadiumOne Connect Plugin for Unity provides advertising and analytics servic
 
 ##a. Development
 
-While Unity development is possible using Windows OS, if you expect to deliver an iOS-compatible application final output to iOS requires Apple's Xcode development tool (Mac OS version 10.7 or newer).
+While Unity development is possible using Windows OS, if you expect to deliver an iOS-compatible application final output to iOS requires Apple's Xcode 6.x (or newer) development tool (Mac OS version 10.8 or newer).
 
 ##b. Using the Plugin in Unity Games
 
@@ -32,7 +33,7 @@ The Connect Plugin Package (R1ConnectPlugin.unitypackage) supports both iOS and 
 
 ### iOS
 
-The Connect plugin supports OS 6.0 and later.  This setting can be found in the Xcode project settings.
+The Connect plugin supports iOS 6.0 and later.  This setting can be found in the Xcode project settings.
 
 The following iOS architectures are supported:
 
@@ -80,12 +81,23 @@ and
 * R1ConnectEngageiOS
 * R1ConnectAnalyticsiOS
 
+
 There are platform specific files within the 'Plugins' sub-directories 'Android' and 'iOS'.
 
-Import all the files listed in the platform directory for each supported OS on which you plan to deploy your application.  You won't need to refer to any of these files directly while coding your application in Unity; the Connect for Unity Plugin scripts will automatically utilize them when you build your project for a target platform.
+Import the files listed in the platform directory for each supported OS on which you plan to deploy your application.  You won't need to refer to any of these files directly while coding your application in Unity; the Connect for Unity Plugin scripts will automatically utilize them when you build your project for a target platform.
 
-Verify that you are building your unity project for iOS or Android.  File > Build Settings... > Android/iOS > Switch Platform
-Without specifying a platform, the compiler will throw an error.
+The Android specific library files include:
+* libR1ConnectEngage.jar - required
+* libR1AdMobMediationAdapter.jar - optional...include if ad mediation is setup using the AdMob network
+* libR1MoPubMediationAdapter.jar - optional...include if ad mediation is setup using the MoPub network
+
+The iOS specific library files include:
+* libR1ConnectEngage - required
+* libR1AdMobMediationAdapter - optional...include if ad mediation is setup using the AdMob network
+* libR1MoPubMediationAdapter - optional...include if ad mediation is setup using the MoPub network
+
+Verify that you are building your Unity project for iOS or Android.  File > Build Settings... > Android/iOS > Switch Platform
+Without specifying a supported platform, the compiler will throw an error.
 
 ##c. Attach R1ConnectPlugin script to the game object
 Attach the `R1ConnectPluginCommon.cs` to the game object where you want to receive the callbacks of earned rewards, ad closed and list of completed ads.
@@ -104,11 +116,11 @@ First, specify your applicationID.  You only to do this once in your application
 Once the Connect Plugin has its applicationID set, enable one or both of its activity modules: Analytics and DisplayAds.
 
 You can enable these modules with:
-
     R1ConnectPluginCommon.EnableAnalytics();
     R1ConnectPluginCommon.EnableDisplayAds();
 
 As with setting the applicationID, these modules should only be enabled once per application launch.
+
 
 On Android, in addition to the above steps, add the following line to your start method
 
@@ -123,32 +135,43 @@ Also attach the R1ConnectPluginCommon.cs to the main camera or any other game ob
 
 ##b. Advertising Actions
 
-For DisplayAd activities, the Connect Plugin supports full-screen views (Offerwall, Interstitial, Video) and Banners.
 
-The full screen advertisment views can be produced using the following calls:
+For DisplayAd activities, the Connect Plugin supports full-screen views (Offerwall, Interstitial, Video) and Banners. When you invoke these methods, you have the option to supply a dictionary of placementIds.
 
-    R1ConnectPluginCommon.ShowOfferwall();
-    R1ConnectPluginCommon.ShowInterstitial();
-    R1ConnectPluginCommon.ShowVideo();
+PlacementsIds represent R1Engage TrackIds and third party adUnitIds (that are used for Ad Mediation - discussed later). An Engage TrackId is a custom string that (uniquely) identifies any given advertisement.
+
+```
+	Dictionary<string, string> placementIds = new Dictionary<string, string>();
+	
+	placementIds.Add (R1ConnectPluginCommon.ENGAGE_ADAPTER, Unique Engage Track Ids); // Setting a trackID allows you to later check if a user completed an offer related to an viewed advertisement, allowing you to reward them with some in app bonus or feature that you designate.
+```
+Pass the dictionary object to the following methods to show the full screen ads.
+
+    R1ConnectPluginCommon.ShowOfferwall(Dictionary offerwallPlacementIds);
+    R1ConnectPluginCommon.ShowInterstitial(Dictionary interstitialPlacementIds);
+    R1ConnectPluginCommon.ShowVideo(Dictionary videoPlacementIds);
 
 When you call these functions, one of three things will happen:
 
   1) An advertisement is found and the specific advertising view is displayed
-  2) An advertisment is not available and nothing is displayed
+  2) An advertisement is not available for any of the ad networks if ad mediation is enabled and nothing is displayed
   3) Some error occurred and nothing is displayed
 
-As the Connect Plugin is intended to be an easy, lightweight method to integrate advertisments into your application, there are no status values to check or error handling to deal with in your Unity code.  The advertisments display if possible, otherwise the request will silently fail.
+As the Connect Plugin is intended to be an easy, lightweight method to integrate advertisements into your application, there are no status values to check or error handling to deal with in your Unity code.  The advertisements display if possible, otherwise the request will silently fail.
 
-To display an Ad Banner, there are two functions to choose from:
 
-	R1ConnectPluginCommon.ShowSmartBanner(R1ConnectPluginCommon.BannerPosition position)
+To display an Ad Banner, create the dictionary of placementIds for banner ad as discussed above for other ad types. You can choose to display banner from these options.
 
-	R1ConnectPluginCommon.ShowBanner(R1ConnectPluginCommon.BannerSize type, R1ConnectPluginCommon.BannerPosition position)
+
+	R1ConnectPluginCommon.ShowSmartBanner(Dictionary bannerPlacementIds, R1ConnectPluginCommon.BannerPosition position)
+
+	R1ConnectPluginCommon.ShowBanner(Dictionary bannerPlacementIds, R1ConnectPluginCommon.BannerSize type, R1ConnectPluginCommon.BannerPosition position)
 
 'ShowSmartBanner' takes a parameter to allow you to specify if you want the banner to appear at the top or bottom of the screen:
 
 	R1ConnectPluginCommon.BannerPosition.POSITION_TOP
 	R1ConnectPluginCommon.BannerPosition.POSITION_BOTTOM
+
 
 A banner that is appropriately sized for the current device screen size and game view orientation will be automatically selected.
 
@@ -166,6 +189,7 @@ Alternatively, 'ShowBanner' can be used to create a banner of a specific predefi
 	R1ConnectPluginCommon.BannerPosition.POSITION_TOP
 	R1ConnectPluginCommon.BannerPosition.POSITION_BOTTOM
 
+
 While the Offerwall, Interstitial and Video ad types all provide a method for the user to dismiss them from view, the Banner ad type is removed from the screen using:
 
 	R1ConnectPluginCommon.HideBanner()
@@ -173,17 +197,16 @@ While the Offerwall, Interstitial and Video ad types all provide a method for th
 Once called, the banner will be removed from the screen and all memory related to the banner released.
 
 
-The 'HandleDidClosed' callback method implemented in this sdk is invoked when a user exits an advertising flow.
+The 'HandleDidClosed' callback method implemented in this SDK is invoked when a user exits an advertising flow.
 
 ````
-
 	public void HandleDidClosed(){
 		// do something
 	}
 ````
 
 CheckCompletion will send an asynchronous query to our servers to return (if applicable) rewards earned (in your app's currency) and the list of trackIDs associated with completed offers - if no offers have been completed then no trackIDs will be returned.
-TrackIDs are values specified by your application to (uniquely) identify any given advertisement.  You set a trackID prior to displaying an advertisment (explained below in additional configuration options).
+TrackIDs are values specified by your application to (uniquely) identify any given advertisement.  You set a trackID prior to displaying an advertisement (explained below in additional configuration options).
 Normally, it is not necessary to call CheckCompletion manually as its checks are typically done automatically as advertisements are viewed and dismissed.  But you may choose to call this upon app launch to ensure there are no completed items waiting to be gathered.
 
 
@@ -192,7 +215,7 @@ Normally, it is not necessary to call CheckCompletion manually as its checks are
 ````
 
 
-The 'HandleDidReceiveNewReward' and 'HandleDidReceiveCompletedOffers' callback methods implemented in this sdk may be invoked  after an advertisment is viewed or dimissed as well as upon return of a manual call to CheckCompletion().
+The 'HandleDidReceiveNewReward' and 'HandleDidReceiveCompletedOffers' callback methods implemented in this SDK may be invoked  after an advertisement is viewed or dismissed as well as upon return of a manual call to CheckCompletion().
 
 ````
 
@@ -209,7 +232,7 @@ The 'HandleDidReceiveNewReward' and 'HandleDidReceiveCompletedOffers' callback m
 	}
 ````
 
-Register these three handlers in the onEnable method and unregister them in the onDisable method of your script.
+Register these three handlers in the onEnable method and unregister them in the onDisable method of your script.  It is important to carefully choose which object or scene in your application will implement the script for registering and handling the rewards/completed offers callbacks.  Since your application may be notified at any time by these callbacks, you want to attach your script to a game element that is fairly permanent (doesn't tend to unload and reload) because once the advertising engine attempts to notify the application of a reward or completed offer, it will not repeat the notification.  It's a one-time event so you app needs to be listening.
 
 ```
 	void OnEnable()
@@ -225,6 +248,59 @@ Register these three handlers in the onEnable method and unregister them in the 
 		R1ConnectPluginCommon.didReceiveCompletedOffers -= HandleDidReceiveCompletedOffers;
 	}
 ```	
+### i. Ad Mediation
+
+Ad mediation allow your application to pull from a wider pool of ad networks to fulfill an ad request giving you confidence that there will be ads to display when you want them.  Engage supports mediation by enabling ad fulfillment via the following ad networks:
+
+* Google AdMob - https://www.google.com/ads/admob/
+* MoPub - http://www.mopub.com
+
+#### Enabling ad mediation
+
+To enable mediation in your application is a four step process.
+
+1) Set up an account and create placement ids (adUnits) in the AdMob, MoPub web portals.  AdUnitIds are tied to each ad you place in your application and are unique for each platform to which you deploy.  You should create a unique AdUnitId for each ad placement in your application for each platform to which you intend to deploy.
+
+2) Add the mediation adapter libraries (of each desired network) to your project.  This was discussed in the section  - [b. Connect Package Scripts](#user-content-b-connect-package-scripts)
+
+For Android targets include the MediationAdapter.jar file for any network that you've activated in the previous step:
+
+* libR1AdMobMediationAdapter.jar
+* libR1MoPubMediationAdapter.jar
+
+For iOS targets, the MediationAdapter libraries are:
+
+* libR1AdMobMediationAdapter.a
+* libR1MoPubMediationAdapter.a
+
+
+3) In your code, enable mediation behavior with the following line of code:
+```
+    R1ConnectPluginCommon.EnableAdMediation();
+```
+
+It is recommended that you make this call at the same place where you enable displayAds:
+```
+    R1ConnectPluginCommon.EnableAdMediation();
+    R1ConnectPluginCommon.EnableDisplayAds();
+```
+
+4) The adUnit ids that you generate in the web portals must be used to initialize each advertisement you want to display in your application.  This can be accomplished by adding the appropriate adUnitId for each activated mediation network to the placementIds dictionary that you can pass to each advertisement you display in your application. Note that AdMob and MoPub both specify unique keys between platforms so you will need to generate and apply the unique AdUnitIds for each supported platform.
+```
+	Dictionary<string, string> bannerPlacementIDs = new Dictionary<string, string>();
+	
+	bannerPlacementIDs.Add (R1ConnectPluginCommon.ENGAGE_ADAPTER, Unique Engage Track Ids); // Setting a trackID allows you to later check if a user completed an offer related to an viewed advertisement, allowing you to reward them with some in app bonus or feature that you designate. If Ad mediation is not turned off then simply put the track id for Engage
+    #if UNITY_IPHONE
+	bannerPlacementIDs.Add(R1ConnectPluginCommon.ADMOB_ADAPTER, Your iOS AdMob placement key for banner goes here);
+	bannerPlacementIDs.Add (R1ConnectPluginCommon.MOPUB_ADAPTER, Your iOS MoPub placement key for banner goes here);
+    #elif UNITY_ANDROID
+	bannerPlacementIDs.Add(R1ConnectPluginCommon.ADMOB_ADAPTER, Your Android AdMob placement key for banner goes here);
+	bannerPlacementIDs.Add (R1ConnectPluginCommon.MOPUB_ADAPTER, Your Android MoPub placement key for banner goes here);
+	#endif
+	R1ConnectPluginCommon.ShowSmartBanner(bannerPlacementIDs, R1ConnectPluginCommon.BannerPosition.POSITION_TOP);
+```
+
+That's all that is required in your app! It is required to also configure the rules by which Engage will execute mediation.  The mediation rules can be managed via the RadiumOne Engage web portal (http://gwallet.net/gwallet-admin).  Now, whenever, you request an advertisement, the Connect Unity Plugin will automatically attempt to fill the request according to the rules you specified in the RadiumOne Engage web portal.
 
 
 ###1. Additional Configuration Options
@@ -244,13 +320,6 @@ There are several optional values you can set that will add to the quality of yo
     R1ConnectPluginCommon.SetAge(int age)
 	// The age of your user.
 	
-    R1ConnectPluginCommon.SetTrackId(string trackId)
-	// A custom value for your own tracking needs (we will save and return back up to 100 characters of it).
-	// Typically, you would want to set this (changing) value right before you present an advertisement
-	// (offerwall, video, interstitial, banner).  Setting a trackID allows you to later check if a user
-	// completed an offer related to an viewed advertisment, allowing you to reward them with some in app
-	// bonus or feature that you designate.
-
 
 ##c. Analytics Actions
 
@@ -293,7 +362,7 @@ Example: "ProfileViewing"
 
 Avoid: "Profile Viewing - Lady Gaga's profile"
 
-As you may have thousands of user profiles in your database, it is preferable to keep the event name high level ("ProfileViewing") so you can run interesting anaytics on it. High level events help answer questions like "how many profiles does a user visit every day on average?" 
+As you may have thousands of user profiles in your database, it is preferable to keep the event name high level ("ProfileViewing") so you can run interesting analytics on it. High level events help answer questions like "how many profiles does a user visit every day on average?" 
 
 Another common mistake is to add parameters to the event that have too many possible values. To follow up on the previous example, one may decide to add the number of profile followers as an event parameter:
 			  			   
@@ -336,18 +405,33 @@ As noted earlier, the Connect Plugin supports devices running iOS 6.0 or newer. 
 
 The only additional requirement for building your project for iOS to support the Connect Plugin is to link against the needed set of system frameworks.
 
-Again, in Xcode, navigate to the "Build Phases" project settings and add the following frameworks:
+Again, in Xcode, navigate to the "Build Phases" project settings and add the following frameworks (if they are not already present):
 
-* AdSupport.framework
+* AdSupport.framework - marked Optional instead of Required
 * CoreBluetooth.framework
 * CoreLocation.framework
 * CoreTelephony.framework
 * Security.framework
 * StoreKit.framework
 * SystemConfiguration.framework
+* WebKit.framework - marked Optional instead of Required
 * libsqlite3.dylib
 
-Note: As is standard for Unity projects, if you Replace the Xcode project when you 'Build and Run' from within the Unity development app, you will need to re-apply these customizations to your Xcode project.  After the initial setup of the Xcode project, it is suggested that you save your project to the same file for every build.  When the Unity app warns that an existing project file already exists, use the 'Append' option so that your code changes are applied but your project settings are left intact.
+It is important to add an entry to the 'Other Linker Flags' setting in your application's Build Settings in Xcode. Add '-ObjC' to the 'Other Linker Flags' setting if it is not already present. This is a common required flag when integrating static libraries with your code.
+
+**Additional Setup For Ad Mediation**
+If your Unity application is using the advertising feature of the SDK and additionally has enabled ad mediation using MoPub, there is a short list of resource files that you must manually add to your Xcode project for MoPub advertisements to display correctly.
+
+Alongside the R1UnityConnect.unitypackage file, you should find an 'iOS Resources' folder.  Within that folder is the 'MoPubResources' folder which contains:
+
+* MPCloseButtonX.png
+* MPCloseButtonX@2x.png
+* MRAID.bundle
+
+These files are all required to be included in your application for MoPub advertisements to be displayed correctly.  Again, these files are only required if you are using the advertising component of R1UnityConnect and have mediation enabled and MoPub setup.  Once the Xcode project has been created by building in Unity, you can add the two png image files to your Xcode project's Images.xcassets catalog.  The MRAID.bundle can be placed with any of the other auxiliary resource files. e.g. application plist.
+
+**Note:**
+As is standard for Unity projects, if you Replace the Xcode project when you 'Build and Run' from within the Unity development app, you will need to re-apply these customizations to your Xcode project.  After the initial setup of the Xcode project, it is suggested that you save your project to the same file for every build.  When the Unity app warns that an existing project file already exists, use the 'Append' option so that your code changes are applied but your project settings are left intact.
 
 ##b. For Android Targets
 
@@ -357,5 +441,46 @@ Add the latest google-play-services.jar file into Assets/Plugins/Android directo
  <meta-data android:name="com.google.android.gms.version"
         android:value="5077000" />
 ```        
-        
+
+**Additional Configuration for Mediation Support**
+
+**Adding AdMob SDK and its adapter**
+
+Make sure you have your account setup on the AdMob website and have created all the ad placements required by your application, as described above. AdMob SDK is supported by Google play services so it does not require you to download the SDK. Add the proper version of Google play services in build.gradle as explained above.
+
+Include the google-play-services_lib as an Android library to the plugin project. You can find google-play-service.jar file in ```<ANDROID_SDK_DIR>/extras/google/google_play_services/libproject/google-play-services_lib/libs```
+
+Add the Ad view Activity in the AndroidManifest.xml.
+```java
+<activity android:name="com.google.android.gms.ads.AdActivity"
+       android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+       android:theme="@android:style/Theme.Translucent" />
+```
+
+Confirm the correct version of google play services in manifest file.
+
+```java
+<meta-data android:name="com.google.android.gms.version"
+        android:value="XXXXXXX" />
+```        
+
+**Adding MoPub SDK and its adapter**
+
+Make sure you have your MoPub account setup on the MoPub website and have created all the ad placements required by your application, as described above. The MoPub SDK and integration documentation is available here:
+
+https://github.com/mopub/mopub-unity-android-plugin
+
+From the MoPub documentation, create the MoPubPlugin.jar file and copy it to Unity project's Plugins/Android directory. Also include the libR1MoPubMediationAdapter.jar file if you have not included while importing unity package.
+
+Add the MoPub specific activities in the AndroidManifest.xml file
+```java
+<activity android:name="com.mopub.mobileads.MoPubActivity" android:configChanges="keyboardHidden|orientation"/>
+<activity android:name="com.mopub.mobileads.MraidActivity" android:configChanges="keyboardHidden|orientation"/>
+<activity android:name="com.mopub.mobileads.MraidBrowser" android:configChanges="keyboardHidden|orientation"/>
+<activity android:name="com.millennialmedia.android.MMActivity"android:theme="@android:style/Theme.Translucent.NoTitleBar" android:configChanges="keyboardHidden|orientation"/>
+<activity android:name="com.millennialmedia.android.VideoPlayer"android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:configChanges="keyboardHidden|orientation|keyboard"/>
+<activity android:name="com.mopub.common.MoPubBrowser" android:configChanges="keyboardHidden|orientation"/>
+<activity android:name="com.mopub.mobileads.MraidVideoPlayerActivity" android:configChanges="keyboardHidden|orientation"/>
+```
+
 Enjoy!
