@@ -197,25 +197,26 @@ While the Offerwall, Interstitial and Video ad types all provide a method for th
 Once called, the banner will be removed from the screen and all memory related to the banner released.
 
 
-The 'HandleDidClosed' callback method implemented in this SDK is invoked when a user exits an advertising flow.
+To respond to specific interesting events that can occur as a result of using the Connect Plugin, you can write and register callbacks that will be called every time these events occur.
+
+The 'adWillGainFocus' callback method is invoked when a user enters an advertising flow. It takes the form:
 
 ````
-	public void HandleDidClosed(){
-		// do something
+	public void HandleAdWillGainFocus(){
+		// do something - this is an ideal time to pause the game before an Ad appears or expands and obscures the game scene
 	}
 ````
 
-CheckCompletion will send an asynchronous query to our servers to return (if applicable) rewards earned (in your app's currency) and the list of trackIDs associated with completed offers - if no offers have been completed then no trackIDs will be returned.
-TrackIDs are values specified by your application to (uniquely) identify any given advertisement.  You set a trackID prior to displaying an advertisement (explained below in additional configuration options).
-Normally, it is not necessary to call CheckCompletion manually as its checks are typically done automatically as advertisements are viewed and dismissed.  But you may choose to call this upon app launch to ensure there are no completed items waiting to be gathered.
-
+The 'adDidLoseFocus' callback method is invoked when a user exits an advertising flow. It takes the form:
 
 ````
-	R1ConnectPluginCommon.CheckCompletion()
+	public void HandleAdDidLoseFocus(){
+		// do something - this is an ideal time to un-pause the game (if you previously paused it) as the Ad disappears or collapses to reveal the game scene
+	}
 ````
 
 
-The 'HandleDidReceiveNewReward' and 'HandleDidReceiveCompletedOffers' callback methods implemented in this SDK may be invoked  after an advertisement is viewed or dismissed as well as upon return of a manual call to CheckCompletion().
+The 'didReceiveNewReward' and 'didReceiveCompletedOffers' callback methods may be invoked after an advertisement is viewed or dismissed as well as upon return of a manual call to CheckCompletion().  They should take the form similar to the following:
 
 ````
 
@@ -232,22 +233,34 @@ The 'HandleDidReceiveNewReward' and 'HandleDidReceiveCompletedOffers' callback m
 	}
 ````
 
-Register these three handlers in the onEnable method and unregister them in the onDisable method of your script.  It is important to carefully choose which object or scene in your application will implement the script for registering and handling the rewards/completed offers callbacks.  Since your application may be notified at any time by these callbacks, you want to attach your script to a game element that is fairly permanent (doesn't tend to unload and reload) because once the advertising engine attempts to notify the application of a reward or completed offer, it will not repeat the notification.  It's a one-time event so you app needs to be listening.
+Register these handlers (for each you have written) in the onEnable method and unregister them in the onDisable method of your script.  It is important to carefully choose which object or scene in your application will implement the script for registering and handling the rewards/completed offers callbacks.  Since your application may be notified at any time by these callbacks, you want to attach your script to a game element that is fairly permanent (doesn't tend to unload and reload) because once the advertising engine attempts to notify the application of a reward or completed offer, it will not repeat the notification.  It's a one-time event so you app needs to be listening.
 
 ```
 	void OnEnable()
 	{
-		R1ConnectPluginCommon.didClosed += HandleDidClosed;
+		R1ConnectPluginCommon.adWillGainFocus += HandleAdWillGainFocus;
+		R1ConnectPluginCommon.adDidLoseFocus += HandleAdDidLoseFocus;
 		R1ConnectPluginCommon.didReceiveNewReward += HandleDidReceiveNewReward;
 		R1ConnectPluginCommon.didReceiveCompletedOffers += HandleDidReceiveCompletedOffers;
 	}
 	void OnDisable()
 	{
-		R1ConnectPluginCommon.didClosed -= HandleDidClosed; 
+		R1ConnectPluginCommon.adWillGainFocus -= HandleAdWillGainFocus; 
+		R1ConnectPluginCommon.adDidLoseFocus -= HandleAdDidLoseFocus; 
 		R1ConnectPluginCommon.didReceiveNewReward -= HandleDidReceiveNewReward;
 		R1ConnectPluginCommon.didReceiveCompletedOffers -= HandleDidReceiveCompletedOffers;
 	}
 ```	
+
+CheckCompletion will send an asynchronous query to our servers to return (if applicable) rewards earned (in your app's currency) and the list of trackIDs associated with completed offers - if no offers have been completed then no trackIDs will be returned.
+TrackIDs are values specified by your application to (uniquely) identify any given advertisement.  You set a trackID prior to displaying an advertisement (explained below in additional configuration options).
+Normally, it is not necessary to call CheckCompletion manually as its checks are typically done automatically as advertisements are viewed and dismissed.  But you may choose to call this upon app launch to ensure there are no completed items waiting to be gathered.
+
+
+````
+	R1ConnectPluginCommon.CheckCompletion()
+````
+
 ### i. Ad Mediation
 
 Ad mediation allow your application to pull from a wider pool of ad networks to fulfill an ad request giving you confidence that there will be ads to display when you want them.  Engage supports mediation by enabling ad fulfillment via the following ad networks:
@@ -426,9 +439,11 @@ Alongside the R1UnityConnect.unitypackage file, you should find an 'iOS Resource
 
 * MPCloseButtonX.png
 * MPCloseButtonX@2x.png
+* MPCloseButtonX@3x.png
 * MRAID.bundle
+* MPAdBrowserController.xib
 
-These files are all required to be included in your application for MoPub advertisements to be displayed correctly.  Again, these files are only required if you are using the advertising component of R1UnityConnect and have mediation enabled and MoPub setup.  Once the Xcode project has been created by building in Unity, you can add the two png image files to your Xcode project's Images.xcassets catalog.  The MRAID.bundle can be placed with any of the other auxiliary resource files. e.g. application plist.
+These files are all required to be included in your application for MoPub advertisements to be displayed correctly.  Again, these files are only required if you are using the advertising component of R1UnityConnect and have mediation enabled and MoPub setup.  Once the Xcode project has been created by building in Unity, you can add the three png image files to your Xcode project's Images.xcassets catalog.  The MRAID.bundle and MPAdBrowserController.xib can be placed with any of the other auxiliary resource files in the Xcode project. e.g. application plist.
 
 **Note:**
 As is standard for Unity projects, if you Replace the Xcode project when you 'Build and Run' from within the Unity development app, you will need to re-apply these customizations to your Xcode project.  After the initial setup of the Xcode project, it is suggested that you save your project to the same file for every build.  When the Unity app warns that an existing project file already exists, use the 'Append' option so that your code changes are applied but your project settings are left intact.
