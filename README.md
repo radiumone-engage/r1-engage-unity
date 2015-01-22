@@ -5,8 +5,8 @@
 - [2. Adding the Plugin to your Unity Project](#user-content-2-adding-the-plugin-to-your-unity-project)
   - [a. Importing](#user-content-a-import)
   - [b. Connect Package Scripts](#user-content-b-connect-package-scripts)
-  - [c. Attach R1ConnectPluginCommon script to the game object](#user-content-c-attach-r1connectplugincommon-script-to-the-game)
-- [3. Using Connect Scripts](#user-content-4-using-connect-scripts)
+  - [c. Attach R1ConnectPluginCommon Script to the Game Object](#user-content-c-attach-r1connectplugin-script-to-the-game-object)
+- [3. Using Connect Scripts](#user-content-3-using-connect-scripts)
   - [a. Basic Initialization](#user-content-a-basic-initialization)
   - [b. Advertising Actions](#user-content-b-advertising-actions)
   - [ i. Ad Mediation](#user-content-i-ad-mediation)
@@ -14,7 +14,7 @@
     - [ i. Automatic Events](#user-content-i-automatic-events)
     - [ ii. Custom Events](#user-content-ii-custom-events)
     - [ iii. Common Events](#user-content-iii-common-events)
-- [4. Building Your Project](#user-content-5-building-your-project)
+- [4. Building Your Project](#user-content-4-building-your-project)
   - [a. For iOS Targets](#user-content-a-for-ios-targets)
   - [b. For Android Targets](#user-content-b-for-android-targets)
 
@@ -91,6 +91,8 @@ The Android specific library files include:
 * libR1AdMobMediationAdapter.jar - optional...include if ad mediation is setup using the AdMob network
 * libR1MoPubMediationAdapter.jar - optional...include if ad mediation is setup using the MoPub network
 
+In addition to these files, please include the android-support-v4 lib in your Android folder.
+
 The iOS specific library files include:
 * libR1ConnectEngage - required
 * libR1AdMobMediationAdapter - optional...include if ad mediation is setup using the AdMob network
@@ -99,7 +101,7 @@ The iOS specific library files include:
 Verify that you are building your Unity project for iOS or Android.  File > Build Settings... > Android/iOS > Switch Platform
 Without specifying a supported platform, the compiler will throw an error.
 
-##c. Attach R1ConnectPlugin script to the game object
+##c. Attach R1ConnectPlugin Script to the Game Object
 Attach the `R1ConnectPluginCommon.cs` to the game object where you want to receive the callbacks of earned rewards, ad closed and list of completed ads.
 
 #3. Using Connect Scripts
