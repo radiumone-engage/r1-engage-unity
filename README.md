@@ -120,6 +120,10 @@ Once the Connect Plugin has its applicationID set, enable one or both of its act
 You can enable these modules with:
     R1ConnectPluginCommon.EnableAnalytics();
     R1ConnectPluginCommon.EnableDisplayAds();
+    
+On Android platform, our analytics module accesses the installed apps on user's device and send it over to our server. This is really helpful to publishers to get better insights on the target audience. By default its turned on. You can turn it off by setting the flag enableAccessToInstalledApps to false in the following api.
+  
+```R1ConnectPluginCommon.EnableAccessInstalledApps (boolean enableAccessToInstalledApps);```
 
 As with setting the applicationID, these modules should only be enabled once per application launch.
 
