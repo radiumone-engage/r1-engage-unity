@@ -9,7 +9,7 @@
 - [3. Using Connect Scripts](#user-content-3-using-connect-scripts)
   - [a. Basic Initialization](#user-content-a-basic-initialization)
   - [b. Advertising Actions](#user-content-b-advertising-actions)
-  - [ i. Ad Mediation](#user-content-i-ad-mediation)
+    - [ i. Ad Mediation](#user-content-i-ad-mediation)
   - [c. Analytics Actions](#user-content-c-analytics-actions)
     - [ i. Automatic Events](#user-content-i-automatic-events)
     - [ ii. Custom Events](#user-content-ii-custom-events)
@@ -46,7 +46,7 @@ While the Connect plugin supports these architectures it is not necessary for yo
 
 ### Android
 
-The Connect plugin supports OS 2.3+.  Google Play Services 4.0 or later is required.
+The Connect plugin supports OS 3.0+.  Google Play Services 4.0 or later is required.
 
 #2. Adding the Plugin to your Unity Project
 
